@@ -12,6 +12,7 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Edit the label
 * Delete a postit
 * Organise postit's by clicking and dragging
+* View who has left and joined the board
 
 ### Error handling
 
@@ -53,3 +54,5 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Add unit tests
 * Change the backend code to save the board state in a database instead of in memory
 * Updated frontend so you can write large amounts of text
+* Add user management and permissions
+* Add board management UI screens
