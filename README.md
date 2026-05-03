@@ -51,3 +51,4 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Implement central logger with tracing
 * Investigate signalr backplane for scaling in microservices
 * Add unit tests
+* Change the backend code to save the board state in a database instead of in memory
