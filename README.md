@@ -13,6 +13,12 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Delete a postit
 * Organise postit's by clicking and dragging
 
+### Error handling
+
+* Handles situations where discounts with the server may occur
+* On connection fail it will attempt to reconnect and disables editing while doing so
+* Uses exponential backoff when attempting to reconnect
+
 ## Prerequisites 
 
 * .NET 10 SDK
@@ -47,3 +53,12 @@ lib/        = small generic utilities
 
 * Uses .NET and Signalr to provide real time events
 * Provides state management to hold the state of the board while the backend is running
+
+
+# Todo
+
+* Improve the UI when connect has failed and editing is disabled
+* Investigate ways to restore or merge local state with server state so users can work offline
+* Implement central logger with tracing
+* Investigate signalr backplane for scaling in microservices
+* Add unit tests

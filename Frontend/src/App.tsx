@@ -52,7 +52,7 @@ function App() {
       console.error("SignalR connection closed:", error);
       setConnectionStatus("disconnected");
       setErrorMessage(
-        "The whiteboard connection was lost. Please refresh the page to try again."
+        "The whiteboard server connection was lost. Please refresh the page to try again."
       );
     });
 
