@@ -59,8 +59,13 @@ public class WhiteboardStore
     }
 }
 
+public interface IWhiteboardHub
+{
+    Task RecieveNotification(string UserId, WhiteBoard whiteBoard);
+    Task ReceiveMessage(WhiteBoard whiteBoard);
+}
 
-public class WhiteboardHub : Hub
+public class WhiteboardHub : Hub<IWhiteboardHub>
 {
     private readonly WhiteboardStore _store;
 
@@ -71,24 +76,18 @@ public class WhiteboardHub : Hub
 
     public override Task OnConnectedAsync()
     {
-        return Clients.All.SendAsync("RecieveNotification", new {
-            UserId = $"{Context.ConnectionId} joined the chat",
-            Whiteboard = _store.Get()
-        });
+        return Clients.All.RecieveNotification($"{Context.ConnectionId} joined the chat", _store.Get());
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        return Clients.All.SendAsync("RecieveNotification", new {
-            UserId = $"{Context.ConnectionId} left the chat",
-            Whiteboard = _store.Get()
-        });
+        return Clients.All.RecieveNotification($"{Context.ConnectionId} left the chat", _store.Get());
     }
 
     public async Task UpdateWhiteBoard(WhiteBoard whiteBoard)
     {
         _store.Set(whiteBoard);
-        await Clients.All.SendAsync("ReceiveMessage", whiteBoard);
+        await Clients.All.ReceiveMessage(whiteBoard);
     }
 }
 
