@@ -6,6 +6,13 @@ Whenever a new client connects to the board, they are given a connection id and 
 
 <img src="whiteboard.png" alt="whiteboard running" />
 
+### Currently you can
+
+* Add a new postit
+* Edit the label
+* Delete a postit
+* Organise postit's by clicking and dragging
+
 ## Prerequisites 
 
 * .NET 10 SDK
@@ -21,6 +28,7 @@ Whenever a new client connects to the board, they are given a connection id and 
 ## Frontend React project
 
 * Uses react library to build the UI
+* Uses tailwindcss for styling
 * Implements a drawing loop to render a canvas element whenever new events are recieved
 * Subscribes and sends events to backend project
 
