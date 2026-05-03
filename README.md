@@ -4,6 +4,8 @@ This project demonstrates a real-time collaboration board.
 
 Whenever a new client connects to the board, they are given a connection id and the current state of the board is loaded. Any changes to the board are propagated to every client in realtime.
 
+<img src="whiteboard.png" alt="whiteboard running" />
+
 ## Prerequisites 
 
 * .NET 10 SDK
