@@ -16,6 +16,7 @@ function App() {
   const [editorValue, setEditorValue] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [connectionStatus, setConnectionStatus] = useState("connecting");
+  const [disable, setDisable] = useState(false);
 
   // click offset stored as ref to stop react re-rendering then updated
   const offsetRef = useRef({ x: 0, y: 0 });
@@ -36,22 +37,22 @@ function App() {
     connection.onreconnecting(error => {
       console.warn("SignalR reconnecting:", error);
       setConnectionStatus("reconnecting");
+      setDisable(true);
       setErrorMessage("Connection lost. Reconnecting...");
     });
 
     connection.onreconnected(connectionId => {
       console.info("SignalR reconnected:", connectionId);
-
+      setDisable(false);
       setConnectionStatus("connected");
       setErrorMessage("");
     });
 
     connection.onclose(error => {
       console.error("SignalR connection closed:", error);
-
       setConnectionStatus("disconnected");
       setErrorMessage(
-        "The whiteboard connection was lost."
+        "The whiteboard connection was lost. Please refresh the page to try again."
       );
     });
 
@@ -66,8 +67,8 @@ function App() {
         setErrorMessage("");
       } catch (error) {
         console.error("SignalR connection failed:", error);
-
-        setConnectionStatus("disconnected");
+        setDisable(true);
+        setConnectionStatus("unable to establish connection");
         setErrorMessage(
           "Could not connect to the whiteboard server. Please refresh the page to try again."
         );
@@ -128,13 +129,19 @@ function App() {
 
   async function sendWhiteboardUpdate(postIts: Array<PostIt>){
     try {
+        // local cache?
+        //setPostIts(postIts);
+        
+        // send to server for all clients
         await connection?.invoke("UpdateWhiteBoard", { PostIts: postIts })
         setErrorMessage("");
     } catch (error) {
       console.error("Failed to update whiteboard:", error);
-      setErrorMessage(
-        "Your change could not be saved. Please check your connection and try again."
-      );
+      setConnectionStatus("connection failed");
+      // not needed as we now disable canvas on reconnect?
+      // setErrorMessage(
+      //   "Your change could not be saved. Please check your connection and try again."
+      // );
     }
   }
 
@@ -247,7 +254,8 @@ function App() {
 
           <button
             onClick={addItem}
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700"
+            className={`rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 ${disable ? "cursor-not-allowed" : ""}`}
+            disabled={disable}
           >
             + Add item
           </button>
@@ -263,9 +271,8 @@ function App() {
             onMouseMove={handleMouseMove}
             onMouseUp={stopDragging}
             onMouseLeave={stopDragging}
-            className="block active:cursor-grabbing"
+            className={disable ? "block pointer-events-none cursor-not-allowed" : "block active:cursor-grabbing"}
           />
-
 
           {editingItemId &&
             <div style={editorStyle} className='absolute flex'>
