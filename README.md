@@ -4,6 +4,18 @@ This project demonstrates a real-time collaboration board.
 
 Whenever a new client connects to the board, they are given a connection id and the current state of the board is loaded. Any changes to the board are propagated to every client in realtime.
 
+## Prerequisites 
+
+* .NET 10 SDK
+* node LTS
+
+## Running the project
+
+1. download repo
+2. create a terminal in backend project and type `dotnet run`
+3. create a terminal in frontend project and type `npm run dev`
+4. load url provided by terminal in frontend project
+
 ## Frontend React project
 
 * Uses react library to build the UI
@@ -23,4 +35,5 @@ lib/        = small generic utilities
 
 ## Backend .NET project
 
-* Uses .NET and Signalr
+* Uses .NET and Signalr to provide real time events
+* Provides state management to hold the state of the board while the backend is running
