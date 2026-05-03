@@ -38,17 +38,6 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Implements a drawing loop to render a canvas element whenever new events are recieved
 * Subscribes and sends events to backend project
 
-### Organisation
-
-```
-components/ = reusable UI
-features/   = feature-specific UI + logic
-hooks/      = reusable React hooks
-domain/     = pure business logic, classes, algorithms
-services/   = outside-world code: API, storage, analytics
-lib/        = small generic utilities
-```
-
 ## Backend .NET project
 
 * Uses .NET and Signalr to provide real time events
@@ -57,7 +46,7 @@ lib/        = small generic utilities
 
 # Todo
 
-* Improve the UI when connect has failed and editing is disabled
+* Improve the UI when connection has failed and editing is disabled
 * Investigate ways to restore or merge local state with server state so users can work offline
 * Implement central logger with tracing
 * Investigate signalr backplane for scaling in microservices
