@@ -76,12 +76,12 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
 
     public override Task OnConnectedAsync()
     {
-        return Clients.All.RecieveNotification($"{Context.ConnectionId} joined the chat", _store.Get());
+        return Clients.All.RecieveNotification($"{Context.ConnectionId} joined the board", _store.Get());
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        return Clients.All.RecieveNotification($"{Context.ConnectionId} left the chat", _store.Get());
+        return Clients.All.RecieveNotification($"{Context.ConnectionId} left the board", _store.Get());
     }
 
     public async Task UpdateWhiteBoard(WhiteBoard whiteBoard)
