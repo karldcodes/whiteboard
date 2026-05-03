@@ -1,53 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import * as signalR from "@microsoft/signalr";
-import { randomWebSafeColor } from "./domain/functions/colors";
 import { HitTesting } from './domain/classes/hitTesting';
+import { GraphicRender } from './domain/classes/graphics';
+import { createPostIt } from "./domain/functions/postIt";
 
-function createItem(overrides = {}): PostIt {
-  return {
-    id: crypto.randomUUID(),
-    x: 100,
-    y: 100,
-    w: 100,
-    h: 60,
-    color: "tomato",
-    label: "New Item",
-    ...overrides
-  };
-}
-
-class PostItRender {
-  private roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, radius: number, fill: string) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, radius);
-    ctx.fillStyle = fill;
-    ctx.fill();
-  }
-
-  private drawEditButton(ctx: CanvasRenderingContext2D, item: PostIt) {
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    this.roundRect(ctx, item.x + item.w - 38, item.y + 6, 32, 18, 2, ctx.fillStyle);
-
-    ctx.fillStyle = "#334155";
-    ctx.font = "12px sans-serif";
-    ctx.fillText("Edit", item.x + item.w - 22, item.y + 15);
-  }
-
-  public drawItem(ctx: CanvasRenderingContext2D, item: PostIt) {
-    this.roundRect(ctx, item.x, item.y, item.w, item.h, 6, item.color);
-
-    ctx.fillStyle = "rgba(255,255,255,0.18)";
-    ctx.fillRect(item.x, item.y, item.w, 28);
-
-    ctx.fillStyle = "white";
-    ctx.font = "600 15px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(item.label, item.x + item.w / 2, item.y + item.h / 2 + 8);
-
-    this.drawEditButton(ctx, item);
-  }
-}
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -75,23 +31,23 @@ function App() {
   }, []);
 
   useEffect(() => {
-      // Notify when a new user has joined
-      connection?.on("RecieveNotification", (message, whiteboard) => {
-        console.log(message);
-        setMessageList(prev => prev.concat(message));
-        setPostIts(whiteboard.postIts);
-      });
+    // Notify when a new user has joined
+    connection?.on("RecieveNotification", (message, whiteboard) => {
+      console.log(message);
+      setMessageList(prev => prev.concat(message));
+      setPostIts(whiteboard.postIts);
+    });
 
-      // todo add logging
-      connection?.start().catch((err) => console.error(err));
+    // todo add logging
+    connection?.start().catch((err) => console.error(err));
 
-      connection?.on("ReceiveMessage", (board => {
-        setPostIts(board.postIts);
-      }));
-    
+    connection?.on("ReceiveMessage", (board => {
+      setPostIts(board.postIts);
+    }));
 
-    return () => { 
-      connection?.stop(); 
+
+    return () => {
+      connection?.stop();
     }
   }, [connection]);
 
@@ -102,9 +58,9 @@ function App() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const render = new PostItRender();
+    const render = new GraphicRender();
     for (const item of postIts) {
-      render.drawItem(ctx, item);
+      render.drawPostIt(ctx, item);
     }
   }
 
@@ -169,6 +125,7 @@ function App() {
           y: mouse.y - item.y
         };
 
+        // make it so the current item being dragged always appears on top
         const reorderedItems = [...postIts];
         const [selectedItem] = reorderedItems.splice(i, 1);
         reorderedItems.push(selectedItem);
@@ -176,6 +133,7 @@ function App() {
         connection?.invoke("UpdateWhiteBoard", { PostIts: reorderedItems })
           .then(x => console.log("sent"))
           .catch(err => console.error(err));
+          
         setDraggedItemId(selectedItem.id);
         return;
       }
@@ -197,7 +155,7 @@ function App() {
     );
 
     connection?.invoke("UpdateWhiteBoard", { PostIts: newWhiteboard })
-      .then(x => console.log("sent"))
+      .then(() => console.log("board updated"))
       .catch(err => console.error(err));
   }
 
@@ -206,14 +164,25 @@ function App() {
   }
 
   function addItem() {
-    const newItem = createItem({
-      color: randomWebSafeColor()
-    });
+    const newItem = createPostIt();
 
     connection?.invoke("UpdateWhiteBoard", { PostIts: [...postIts, newItem] })
-      .then(x => console.log("sent"))
+      .then(() => console.log("new postit created"))
       .catch(err => console.error(err));
   }
+
+  function deleteItem() {
+    if (!editingItemId) return;
+
+    const newWhiteboard = postIts.filter(item => item.id !== editingItemId);
+
+    connection?.invoke("UpdateWhiteBoard", { PostIts: newWhiteboard })
+      .then(() => console.log("sent"))
+      .catch(err => console.error(err));
+
+    setEditingItemId("");
+  }
+
 
   const editingItem = postIts.find(item => item.id === editingItemId) ?? null;
 
@@ -226,18 +195,6 @@ function App() {
     : {
       display: "none"
     };
-
-  function deleteItem() {
-    if (!editingItemId) return;
-
-    const newWhiteboard = postIts.filter(item => item.id !== editingItemId);
-
-    connection?.invoke("UpdateWhiteBoard", { PostIts: newWhiteboard })
-      .then(x => console.log("sent"))
-      .catch(err => console.error(err));
-
-    setEditingItemId("");
-  }
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 text-slate-900">
