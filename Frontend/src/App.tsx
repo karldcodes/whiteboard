@@ -75,20 +75,23 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (connection) {
       // Notify when a new user has joined
-      connection.on("RecieveNotification", (message) => {
+      connection?.on("RecieveNotification", (message, whiteboard) => {
         console.log(message);
-        setMessageList(prev => prev.concat(message.userId));
-        setPostIts(message.whiteboard.postIts);
+        setMessageList(prev => prev.concat(message));
+        setPostIts(whiteboard.postIts);
       });
 
       // todo add logging
-      connection.start().catch((err) => console.error(err));
+      connection?.start().catch((err) => console.error(err));
 
-      connection.on("ReceiveMessage", (board => {
+      connection?.on("ReceiveMessage", (board => {
         setPostIts(board.postIts);
       }));
+    
+
+    return () => { 
+      connection?.stop(); 
     }
   }, [connection]);
 
