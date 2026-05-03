@@ -56,3 +56,5 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Updated frontend so you can write large amounts of text
 * Add user management and permissions
 * Add board management UI screens
+* Remove references to hardcoded urls
+* Organise backend project into correct folders for interfaces, services etc
