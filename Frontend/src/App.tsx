@@ -14,6 +14,8 @@ function App() {
   const [draggedItemId, setDraggedItemId] = useState<string>("");
   const [editingItemId, setEditingItemId] = useState<string>("");
   const [editorValue, setEditorValue] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState("connecting");
 
   // click offset stored as ref to stop react re-rendering then updated
   const offsetRef = useRef({ x: 0, y: 0 });
@@ -25,10 +27,52 @@ function App() {
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("http://localhost:5025/whiteboardHub")
-      .withAutomaticReconnect()
+      // retry connect with back off until die
+      .withAutomaticReconnect([0, 2000, 5000, 10000])
+      .configureLogging(signalR.LogLevel.Information)
       .build();
+
+
+    connection.onreconnecting(error => {
+      console.warn("SignalR reconnecting:", error);
+      setConnectionStatus("reconnecting");
+      setErrorMessage("Connection lost. Reconnecting...");
+    });
+
+    connection.onreconnected(connectionId => {
+      console.info("SignalR reconnected:", connectionId);
+
+      setConnectionStatus("connected");
+      setErrorMessage("");
+    });
+
+    connection.onclose(error => {
+      console.error("SignalR connection closed:", error);
+
+      setConnectionStatus("disconnected");
+      setErrorMessage(
+        "The whiteboard connection was lost."
+      );
+    });
+
     setConnection(connection);
   }, []);
+
+  async function startConnection() {
+      try {
+        await connection?.start();
+        console.info("SignalR connected");
+        setConnectionStatus("connected");
+        setErrorMessage("");
+      } catch (error) {
+        console.error("SignalR connection failed:", error);
+
+        setConnectionStatus("disconnected");
+        setErrorMessage(
+          "Could not connect to the whiteboard server. Please refresh the page to try again."
+        );
+      }
+    }
 
   useEffect(() => {
     // Notify when a new user has joined
@@ -38,13 +82,11 @@ function App() {
       setPostIts(whiteboard.postIts);
     });
 
-    // todo add logging
-    connection?.start().catch((err) => console.error(err));
-
     connection?.on("ReceiveMessage", (board => {
       setPostIts(board.postIts);
     }));
 
+    startConnection();
 
     return () => {
       connection?.stop();
@@ -84,6 +126,18 @@ function App() {
     }, 0)
   }
 
+  async function sendWhiteboardUpdate(postIts: Array<PostIt>){
+    try {
+        await connection?.invoke("UpdateWhiteBoard", { PostIts: postIts })
+        setErrorMessage("");
+    } catch (error) {
+      console.error("Failed to update whiteboard:", error);
+      setErrorMessage(
+        "Your change could not be saved. Please check your connection and try again."
+      );
+    }
+  }
+
   function saveEdit() {
     if (!editingItemId) return;
 
@@ -93,10 +147,7 @@ function App() {
         : item
     );
 
-    connection?.invoke("UpdateWhiteBoard", { PostIts: newWhiteboard })
-      .then(x => console.log("sent"))
-      .catch(err => console.error(err));
-
+    sendWhiteboardUpdate(newWhiteboard);
     setEditingItemId("");
   }
 
@@ -130,10 +181,7 @@ function App() {
         const [selectedItem] = reorderedItems.splice(i, 1);
         reorderedItems.push(selectedItem);
 
-        connection?.invoke("UpdateWhiteBoard", { PostIts: reorderedItems })
-          .then(x => console.log("sent"))
-          .catch(err => console.error(err));
-          
+        sendWhiteboardUpdate(reorderedItems);
         setDraggedItemId(selectedItem.id);
         return;
       }
@@ -153,10 +201,7 @@ function App() {
         }
         : item
     );
-
-    connection?.invoke("UpdateWhiteBoard", { PostIts: newWhiteboard })
-      .then(() => console.log("board updated"))
-      .catch(err => console.error(err));
+    sendWhiteboardUpdate(newWhiteboard);
   }
 
   function stopDragging() {
@@ -165,21 +210,13 @@ function App() {
 
   function addItem() {
     const newItem = createPostIt();
-
-    connection?.invoke("UpdateWhiteBoard", { PostIts: [...postIts, newItem] })
-      .then(() => console.log("new postit created"))
-      .catch(err => console.error(err));
+    sendWhiteboardUpdate([...postIts, newItem]);
   }
 
   function deleteItem() {
     if (!editingItemId) return;
-
     const newWhiteboard = postIts.filter(item => item.id !== editingItemId);
-
-    connection?.invoke("UpdateWhiteBoard", { PostIts: newWhiteboard })
-      .then(() => console.log("sent"))
-      .catch(err => console.error(err));
-
+    sendWhiteboardUpdate(newWhiteboard);
     setEditingItemId("");
   }
 
@@ -281,6 +318,9 @@ function App() {
         </div>
 
         <div className='pt-4'>
+          <p>Connection status: {connectionStatus}</p>
+          <p className='pb-4'>{errorMessage}</p>
+
           <h3 className='pb-2 font-bold'>Messages:</h3>
           {messageList.map(message => <p className='text-sm text-slate-500'>{message}</p>)}
         </div>
