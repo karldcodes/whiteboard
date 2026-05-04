@@ -1,4 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
+using Whiteboard.Domain;
+using Whiteboard.Domain.Interfaces;
+using Whiteboard.Domain.Commands;
+using Whiteboard.Domain.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,27 +47,7 @@ app.UseCors(frontentOrigin);
 app.Run();
 
 
-public class WhiteboardStore
-{
-    private readonly WhiteBoard _items = new(PostIts: new List<PostIt>());
 
-    public WhiteBoard Get()
-    {
-        return _items;
-    }
-
-    public void Set(WhiteBoard whiteBoard)
-    {
-        _items.PostIts.Clear();
-        _items.PostIts.AddRange(whiteBoard.PostIts);
-    }
-}
-
-public interface IWhiteboardHub
-{
-    Task RecieveNotification(string UserId, WhiteBoard whiteBoard);
-    Task ReceiveMessage(WhiteBoard whiteBoard);
-}
 
 public class WhiteboardHub : Hub<IWhiteboardHub>
 {
@@ -74,22 +58,52 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
         _store = store;
     }
 
-    public override Task OnConnectedAsync()
+    public async Task AddPostIt(PostIt postIt)
     {
-        return Clients.All.RecieveNotification($"{Context.ConnectionId} joined the board", _store.Get());
+        var result = await _store.EnqueueChangeAsync(new AddPostIt(postIt));
+        if (!result.Success)
+        {
+            await Clients.Caller.PostItConflict(result);
+            return;
+        }
+
+        postIt.Version = result.CurrentVersion;
+        await Clients.Others.PostItAdded(postIt);
     }
 
-    public override Task OnDisconnectedAsync(Exception? exception)
+    public async Task MovePostIt(Guid postItId, int x, int y, long version)
     {
-        return Clients.All.RecieveNotification($"{Context.ConnectionId} left the board", _store.Get());
+        var result = await _store.EnqueueChangeAsync(new MovePostIt(postItId, x, y, version));
+        if (!result.Success)
+        {
+            await Clients.Caller.PostItConflict(result);
+            return;
+        }
+
+        await Clients.Others.PostIdMoved(postItId, x, y, result.CurrentVersion);
     }
 
-    public async Task UpdateWhiteBoard(WhiteBoard whiteBoard)
+    public async Task DeletePostIt(Guid postItId, long version)
     {
-        _store.Set(whiteBoard);
-        await Clients.All.ReceiveMessage(whiteBoard);
+        var result = await _store.EnqueueChangeAsync(new DeletePostIt(postItId, version));
+        if (!result.Success)
+        {
+            await Clients.Caller.PostItConflict(result);
+            return;
+        }
+
+        await Clients.Others.PostItDeleted(postItId);
+    }
+
+    public async Task UpdatePostItText(Guid postItId, string text, long version)
+    {
+        var result = await _store.EnqueueChangeAsync(new UpdatePostItText(postItId, text, version));
+        if (!result.Success)
+        {
+            await Clients.Caller.PostItConflict(result);
+            return;
+        }
+
+        await Clients.Others.PostItTextUpdated(postItId, text, result.CurrentVersion);
     }
 }
-
-public record PostIt(Guid Id, int X, int Y, int W, int H, string Color, string Label);
-public record WhiteBoard(List<PostIt> PostIts);
