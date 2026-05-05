@@ -416,7 +416,7 @@ function App() {
           }
         </div>
 
-        <button type="button" className='rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700' onClick={() => GetBoardCommand(connection)}>Sync</button>
+        <button type="button" className='mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700' onClick={() => GetBoardCommand(connection)}>Sync</button>
 
         {/* <div className='pt-4'>
           <p>Connection status: {connectionStatus}</p>
