@@ -20,4 +20,8 @@
     <PackageReference Include="xunit.v3.mtp-v2" Version="3.2.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\src\Whiteboard.Domain\Whiteboard.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

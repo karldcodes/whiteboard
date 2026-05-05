@@ -34,6 +34,6 @@ public sealed record MovePostIt(
         board.PostIts[index] = current;
 
         return ApplyResult.Succeeded(
-            newVersion: current.Version + 1);
+            newVersion: current.Version);
     }
 }

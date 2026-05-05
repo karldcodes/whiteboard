@@ -31,6 +31,6 @@ public sealed record UpdatePostItText(
 
         board.PostIts[index] = current;
 
-        return ApplyResult.Succeeded(current.Version + 1);
+        return ApplyResult.Succeeded(current.Version);
     }
 }

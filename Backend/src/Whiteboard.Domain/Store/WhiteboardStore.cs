@@ -2,7 +2,7 @@ using System.Threading.Channels;
 using Whiteboard.Domain.Models;
 using Whiteboard.Domain.Interfaces;
 
-namespace Whiteboard.Domain;
+namespace Whiteboard.Domain.Store;
 
 /* 
 * Currently the whiteboard is stored in memory but this could easily be switched out for anything else 
