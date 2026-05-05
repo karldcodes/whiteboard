@@ -8,6 +8,7 @@ export function createPostIt(): PostIt {
     w: 100,
     h: 60,
     color: randomWebSafeColor(),
-    label: "New Item"
+    label: "New Item",
+    version: 1
   };
 }

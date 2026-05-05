@@ -4,6 +4,70 @@ import { HitTesting } from './domain/classes/hitTesting';
 import { GraphicRender } from './domain/classes/graphics';
 import { createPostIt } from "./domain/functions/postIt";
 
+async function AddPostItCommand(connection: signalR.HubConnection | undefined, postIt: PostIt){
+  try{
+    await connection?.invoke("AddPostIt", postIt)
+  }catch(error)
+  {
+    console.error("Failed to add postit");
+  }
+}
+
+async function MovePostItCommand(connection: signalR.HubConnection | undefined, postIt: PostIt){
+  try{
+    await connection?.invoke("MovePostIt", postIt.id, postIt.x, postIt.y, postIt.version);
+  }catch(error)
+  {
+    console.error("Failed to move postit");
+  }
+}
+
+async function UpdateTextPostItCommand(connection: signalR.HubConnection | undefined, postIt: PostIt){
+  try{
+    await connection?.invoke("UpdatePostItText", postIt.id, postIt.label, postIt.version);
+  }catch(error)
+  {
+    console.error("Failed to update text postit");
+  }
+}
+
+async function DeletePostItCommand(connection: signalR.HubConnection | undefined, postIt: PostIt){
+  try{
+    await connection?.invoke("DeletePostIt", postIt.id, postIt.version)
+  }catch(error)
+  {
+    console.error("Failed to add postit");
+  }
+}
+
+async function GetBoardCommand(connection: signalR.HubConnection | undefined){
+  try{
+    await connection?.invoke("GetBoard")
+  }catch(error)
+  {
+    console.error("Failed to get board");
+  }
+}
+
+
+// async function sendWhiteboardUpdate(postIts: Array<PostIt>){
+//     try {
+//         // local cache?
+//         //setPostIts(postIts);
+        
+//         // send to server for all clients
+//         await connection?.invoke("UpdateWhiteBoard", { PostIts: postIts })
+//         setErrorMessage("");
+//     } catch (error) {
+//       console.error("Failed to update whiteboard:", error);
+//       setConnectionStatus("connection failed");
+//       // not needed as we now disable canvas on reconnect?
+//       // setErrorMessage(
+//       //   "Your change could not be saved. Please check your connection and try again."
+//       // );
+//     }
+//   }
+
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,34 +91,34 @@ function App() {
 
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5025/whiteboardHub")
+      .withUrl("http://localhost:5274/whiteboardHub")
       // retry connect with back off until die
       .withAutomaticReconnect([0, 2000, 5000, 10000])
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
 
-    connection.onreconnecting(error => {
-      console.warn("SignalR reconnecting:", error);
-      setConnectionStatus("reconnecting");
-      setDisable(true);
-      setErrorMessage("Connection lost. Reconnecting...");
-    });
+    // connection.onreconnecting(error => {
+    //   console.warn("SignalR reconnecting:", error);
+    //   setConnectionStatus("reconnecting");
+    //   setDisable(true);
+    //   setErrorMessage("Connection lost. Reconnecting...");
+    // });
 
-    connection.onreconnected(connectionId => {
-      console.info("SignalR reconnected:", connectionId);
-      setDisable(false);
-      setConnectionStatus("connected");
-      setErrorMessage("");
-    });
+    // connection.onreconnected(connectionId => {
+    //   console.info("SignalR reconnected:", connectionId);
+    //   setDisable(false);
+    //   setConnectionStatus("connected");
+    //   setErrorMessage("");
+    // });
 
-    connection.onclose(error => {
-      console.error("SignalR connection closed:", error);
-      setConnectionStatus("disconnected");
-      setErrorMessage(
-        "The whiteboard server connection was lost. Please refresh the page to try again."
-      );
-    });
+    // connection.onclose(error => {
+    //   console.error("SignalR connection closed:", error);
+    //   setConnectionStatus("disconnected");
+    //   setErrorMessage(
+    //     "The whiteboard server connection was lost. Please refresh the page to try again."
+    //   );
+    // });
 
     setConnection(connection);
   }, []);
@@ -76,16 +140,78 @@ function App() {
     }
 
   useEffect(() => {
-    // Notify when a new user has joined
-    connection?.on("RecieveNotification", (message, whiteboard) => {
-      console.log(message);
-      setMessageList(prev => prev.concat(message));
-      setPostIts(whiteboard.postIts);
+    // // Notify when a new user has joined
+    // connection?.on("RecieveNotification", (message, whiteboard) => {
+    //   console.log(message);
+    //   setMessageList(prev => prev.concat(message));
+    //   setPostIts(whiteboard.postIts);
+    // });
+
+    // connection?.on("ReceiveMessage", (board => {
+    //   setPostIts(board.postIts);
+    // }));
+
+    connection?.on("GetBoard", (board) => {
+      setPostIts(board.postIts);
+    })
+
+    connection?.on("PostItAdded", (postIt) => {
+      console.log("remote post added");
+      setPostIts(previousPostIts => {
+        const newPosts = [...previousPostIts, postIt];
+        console.log(newPosts);
+        return newPosts;
+      });
     });
 
-    connection?.on("ReceiveMessage", (board => {
-      setPostIts(board.postIts);
-    }));
+    connection?.on("PostItConflict", (result) => {
+      // todo handle conflict
+      console.log("conflict occoured!");
+      console.log(result);
+    });
+
+    connection?.on("PostItMoved", (id, x, y, version) => {
+      console.log("remote post moved");
+      setPostIts(previousPostIts => {
+        const newPosts = previousPostIts.map(item => {
+          if(item.id == id)
+          {
+            return {
+              ...item,
+              x: x,
+              y: y,
+              version: version
+            };
+          }
+          else{
+            return item;
+          }
+        });
+        console.log(newPosts);
+        return newPosts;
+      });
+    });
+
+    connection?.on("PostItTextUpdated", (id, text, version) => {
+      console.log("remote post text updated");
+      setPostIts(previousPostIts => {
+        const newPosts = previousPostIts.map(item => {
+          if(item.id == id)
+          {
+            return {
+              ...item,
+              label: text,
+              version: version
+            };
+          }
+          else{
+            return item;
+          }
+        });
+        console.log(newPosts);
+        return newPosts;
+      });
+    });
 
     startConnection();
 
@@ -127,34 +253,27 @@ function App() {
     }, 0)
   }
 
-  async function sendWhiteboardUpdate(postIts: Array<PostIt>){
-    try {
-        // local cache?
-        //setPostIts(postIts);
-        
-        // send to server for all clients
-        await connection?.invoke("UpdateWhiteBoard", { PostIts: postIts })
-        setErrorMessage("");
-    } catch (error) {
-      console.error("Failed to update whiteboard:", error);
-      setConnectionStatus("connection failed");
-      // not needed as we now disable canvas on reconnect?
-      // setErrorMessage(
-      //   "Your change could not be saved. Please check your connection and try again."
-      // );
-    }
-  }
-
   function saveEdit() {
     if (!editingItemId) return;
 
-    const newWhiteboard = postIts.map(item =>
-      item.id === editingItemId
-        ? { ...item, label: editorValue }
-        : item
-    );
+    setPostIts(prevPostIts => prevPostIts.map(item => {
+      if(item.id === editingItemId)
+      {
+        const newPostIt = {
+          ...item,
+          label: editorValue,
+          version: item.version + 1
+        };
 
-    sendWhiteboardUpdate(newWhiteboard);
+        UpdateTextPostItCommand(connection, newPostIt);
+
+        return newPostIt;
+      }
+      else{
+        return item;
+      }
+    }));
+
     setEditingItemId("");
   }
 
@@ -184,12 +303,13 @@ function App() {
         };
 
         // make it so the current item being dragged always appears on top
-        const reorderedItems = [...postIts];
-        const [selectedItem] = reorderedItems.splice(i, 1);
-        reorderedItems.push(selectedItem);
+        // const reorderedItems = [...postIts];
+        // const [selectedItem] = reorderedItems.splice(i, 1);
+        // reorderedItems.push(selectedItem);
 
-        sendWhiteboardUpdate(reorderedItems);
-        setDraggedItemId(selectedItem.id);
+      
+        // sendWhiteboardUpdate(reorderedItems);
+        setDraggedItemId(item.id);
         return;
       }
     }
@@ -199,16 +319,24 @@ function App() {
     if (!draggedItemId) return;
 
     const mouse = getMousePos(event);
-    const newWhiteboard = postIts.map(item =>
-      item.id === draggedItemId
-        ? {
+    setPostIts(previousPostIts => previousPostIts.map(item => {
+      if (item.id === draggedItemId)
+      {
+        const newPostit = {
           ...item,
           x: mouse.x - offsetRef.current.x,
-          y: mouse.y - offsetRef.current.y
+          y: mouse.y - offsetRef.current.y,
+          version: item.version + 1
         }
-        : item
-    );
-    sendWhiteboardUpdate(newWhiteboard);
+
+        // send change to server
+        MovePostItCommand(connection, newPostit);
+
+        return newPostit;
+      } else{
+        return item;
+      }
+    }));
   }
 
   function stopDragging() {
@@ -217,13 +345,20 @@ function App() {
 
   function addItem() {
     const newItem = createPostIt();
-    sendWhiteboardUpdate([...postIts, newItem]);
+
+    AddPostItCommand(connection, newItem);
+    setPostIts(previousPostIts => [...previousPostIts, newItem]);
   }
 
   function deleteItem() {
     if (!editingItemId) return;
-    const newWhiteboard = postIts.filter(item => item.id !== editingItemId);
-    sendWhiteboardUpdate(newWhiteboard);
+
+    const index = postIts.findIndex(i => i.id === editingItemId);
+    const itemToDelete = {...postIts[index]};
+    DeletePostItCommand(connection, itemToDelete);
+    
+    setPostIts(prevPostIts => prevPostIts.filter(item => item.id !== editingItemId));
+
     setEditingItemId("");
   }
 
@@ -323,6 +458,8 @@ function App() {
             </div>
           }
         </div>
+
+        <button type="button" className='rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700' onClick={() => GetBoardCommand(connection)}>Sync</button>
 
         <div className='pt-4'>
           <p>Connection status: {connectionStatus}</p>

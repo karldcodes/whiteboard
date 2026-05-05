@@ -14,6 +14,12 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
         _store = store;
     }
 
+    public async Task GetBoard()
+    {
+        var result = _store.Get();
+        await Clients.All.GetBoard(result);
+    }
+
     public async Task AddPostIt(PostIt postIt)
     {
         var result = await _store.EnqueueChangeAsync(new AddPostIt(postIt));
@@ -22,7 +28,7 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
             await Clients.Caller.PostItConflict(result);
             return;
         }
-
+        
         postIt.Version = result.CurrentVersion;
         await Clients.Others.PostItAdded(postIt);
     }
@@ -36,7 +42,7 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
             return;
         }
 
-        await Clients.Others.PostIdMoved(postItId, x, y, result.CurrentVersion);
+        await Clients.Others.PostItMoved(postItId, x, y, result.CurrentVersion);
     }
 
     public async Task DeletePostIt(Guid postItId, long version)

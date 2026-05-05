@@ -5,5 +5,6 @@ type PostIt = {
   w: number,
   h: number,
   color: string,
-  label: string
+  label: string,
+  version: number
 }
