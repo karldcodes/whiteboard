@@ -19,18 +19,19 @@ public sealed record UpdatePostItText(
 
         var current = board.PostIts[index];
 
-        if (current.Version != ExpectedPostItVersion)
+        if (current.Version + 1 == ExpectedPostItVersion)
         {
-            return ApplyResult.Conflict(
-                current.Version,
-                "This post-it text has already changed.");
+            // this should be the correct next change sent from FE is one ahead
+            current.Label = Text;
+            current.Version++;
+            board.PostIts[index] = current;
+            return ApplyResult.Succeeded(current.Version);
         }
-
-        current.Label = Text;
-        current.Version++;
-
-        board.PostIts[index] = current;
-
-        return ApplyResult.Succeeded(current.Version);
+        
+        // send postit object too?
+        return ApplyResult.Conflict(
+            current.Version,
+            "This post-it text has already changed.", 
+            current);
     }
 }

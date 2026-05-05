@@ -28,7 +28,7 @@ public async Task EnqueueChangeAsync_WhenManyConcurrentChangesUseSameVersion_Onl
                 new UpdatePostItText(
                     PostItId: postItId,
                     Text: $"update {i}",
-                    ExpectedPostItVersion: 1)))
+                    ExpectedPostItVersion: 2)))
         .ToArray();
 
 
@@ -36,17 +36,9 @@ public async Task EnqueueChangeAsync_WhenManyConcurrentChangesUseSameVersion_Onl
 
 
     Assert.Single(results, r => r == ApplyResult.Succeeded(2));
-    Assert.Equal(
-        19,
-        results.Count(r =>
-            r == ApplyResult.Conflict(
-                currentVersion: 2,
-                message: "This post-it text has already changed.")));
-
+    Assert.Equal(19, results.Count(r => !r.Success));
 
     var board = store.Get();
-
-    
     var postIt = Assert.Single(board.PostIts);
     Assert.Equal(2, postIt.Version);
 }

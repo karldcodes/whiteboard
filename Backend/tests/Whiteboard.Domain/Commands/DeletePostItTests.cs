@@ -7,7 +7,7 @@ public sealed class DeletePostItTests
     [Fact]
     public void Apply_WhenPostItDoesNotExist_ReturnsNotFound()
     {
-        var board = new WhiteBoard(PostIts: new List<PostIt>());
+        var board = new WhiteBoard();
         var change = new DeletePostIt(
             Guid.NewGuid(),
             ExpectedPostItVersion: 1);
@@ -20,53 +20,19 @@ public sealed class DeletePostItTests
     }
 
     [Fact]
-    public void Apply_WhenVersionDoesNotMatch_ReturnsConflict()
+    public void Apply_WhenExpectedVersionIsNextVersion_RemovesPostIt()
     {
         var postItId = Guid.NewGuid();
-        var board = new WhiteBoard(
-            PostIts: new List<PostIt> { 
-                new PostIt
+        var board = new WhiteBoard();
+        board.PostIts.Add(new PostIt
         {
             Id = postItId,
             Label = "text",
             Version = 5
-        }});
+        });
         var change = new DeletePostIt(
             postItId,
-            ExpectedPostItVersion: 4);
-
-
-        var result = change.Apply(board);
-
-
-        Assert.Equal(
-            ApplyResult.Conflict(
-                5,
-                "This post-it has already changed or was deleted."),
-            result);
-
-        Assert.Single(board.PostIts);
-        Assert.Equal(postItId, board.PostIts[0].Id);
-        Assert.Equal(5, board.PostIts[0].Version);
-    }
-
-    [Fact]
-    public void Apply_WhenVersionMatches_RemovesPostIt()
-    {
-        var postItId = Guid.NewGuid();
-        var board = new WhiteBoard(
-            PostIts: new List<PostIt> { 
-                new PostIt
-                {
-                    Id = postItId,
-                    Label = "text",
-                    Version = 5
-                }
-            }
-        );
-        var change = new DeletePostIt(
-            postItId,
-            ExpectedPostItVersion: 5);
+            ExpectedPostItVersion: 6);
 
 
         change.Apply(board);
@@ -76,54 +42,39 @@ public sealed class DeletePostItTests
     }
 
     [Fact]
-    public void Apply_WhenVersionMatches_RemovesOnlyMatchingPostIt()
+    public void Apply_WhenExpectedVersionIsNextVersion_ReturnsSucceededWithExpectedVersion()
     {
         var postItId = Guid.NewGuid();
-        var otherPostItId = Guid.NewGuid();
-        var board = new WhiteBoard(
-            PostIts: new List<PostIt> { 
-                new PostIt
-                {
-                    Id = otherPostItId,
-                    Label = "other",
-                    Version = 2
-                }
-            }
-        );
+        var board = new WhiteBoard();
         board.PostIts.Add(new PostIt
         {
             Id = postItId,
-            Label = "delete me",
+            Label = "text",
             Version = 5
         });
         var change = new DeletePostIt(
             postItId,
-            ExpectedPostItVersion: 5);
+            ExpectedPostItVersion: 6);
 
 
-        change.Apply(board);
+        var result = change.Apply(board);
 
 
-        var remaining = Assert.Single(board.PostIts);
-        Assert.Equal(otherPostItId, remaining.Id);
-        Assert.Equal("other", remaining.Label);
-        Assert.Equal(2, remaining.Version);
+        Assert.Equal(ApplyResult.Succeeded(6), result);
     }
 
     [Fact]
-    public void Apply_WhenVersionMatches_ReturnsSucceededWithNextVersion()
+    public void Apply_WhenExpectedVersionDoesNotMatch_ReturnsConflict()
     {
         var postItId = Guid.NewGuid();
-        var board = new WhiteBoard(
-            PostIts: new List<PostIt> { 
-                new PostIt
-                {
-                    Id = postItId,
-                    Label = "text",
-                    Version = 5
-                }
-            }
-        );
+        var current = new PostIt
+        {
+            Id = postItId,
+            Label = "text",
+            Version = 5
+        };
+        var board = new WhiteBoard();
+        board.PostIts.Add(current);
         var change = new DeletePostIt(
             postItId,
             ExpectedPostItVersion: 5);
@@ -132,6 +83,40 @@ public sealed class DeletePostItTests
         var result = change.Apply(board);
 
 
-        Assert.Equal(ApplyResult.Succeeded(6), result);
+        Assert.Equal(
+            ApplyResult.Conflict(
+                5,
+                "This post-it has already been deleted.",
+                current),
+            result);
+        Assert.Single(board.PostIts);
+        Assert.Equal(postItId, board.PostIts[0].Id);
+        Assert.Equal(5, board.PostIts[0].Version);
+    }
+
+    [Fact]
+    public void Apply_WhenExpectedVersionDoesNotMatch_DoesNotRemovePostIt()
+    {
+        var postItId = Guid.NewGuid();
+        var board = new WhiteBoard();
+        board.PostIts.Add(new PostIt
+        {
+            Id = postItId,
+            Label = "text",
+            Version = 5
+        });
+        var change = new DeletePostIt(
+            postItId,
+            ExpectedPostItVersion: 99);
+
+
+        change.Apply(board);
+
+
+        var postIt = Assert.Single(board.PostIts);
+        Assert.Equal(postItId, postIt.Id);
+        Assert.Equal("text", postIt.Label);
+        Assert.Equal(5, postIt.Version);
     }
 }
+

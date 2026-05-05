@@ -18,15 +18,16 @@ public sealed record DeletePostIt(
 
         var current = board.PostIts[index];
 
-        if (current.Version != ExpectedPostItVersion)
+        if (current.Version + 1 == ExpectedPostItVersion)
         {
-            return ApplyResult.Conflict(
-                current.Version,
-                "This post-it has already changed or was deleted.");
+            board.PostIts.RemoveAt(index);
+            // todo this inc to version can most likely be removed
+            return ApplyResult.Succeeded(current.Version + 1);
         }
 
-        board.PostIts.RemoveAt(index);
-
-        return ApplyResult.Succeeded(current.Version + 1);
+        return ApplyResult.Conflict(
+                current.Version,
+                "This post-it has already been deleted.",
+                current);
     }
 }

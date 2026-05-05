@@ -9,6 +9,7 @@ async function AddPostItCommand(connection: signalR.HubConnection | undefined, p
     await connection?.invoke("AddPostIt", postIt)
   }catch(error)
   {
+    // todo return object to let user know something failed
     console.error("Failed to add postit");
   }
 }
@@ -49,26 +50,6 @@ async function GetBoardCommand(connection: signalR.HubConnection | undefined){
   }
 }
 
-
-// async function sendWhiteboardUpdate(postIts: Array<PostIt>){
-//     try {
-//         // local cache?
-//         //setPostIts(postIts);
-        
-//         // send to server for all clients
-//         await connection?.invoke("UpdateWhiteBoard", { PostIts: postIts })
-//         setErrorMessage("");
-//     } catch (error) {
-//       console.error("Failed to update whiteboard:", error);
-//       setConnectionStatus("connection failed");
-//       // not needed as we now disable canvas on reconnect?
-//       // setErrorMessage(
-//       //   "Your change could not be saved. Please check your connection and try again."
-//       // );
-//     }
-//   }
-
-
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,29 +78,6 @@ function App() {
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
-
-    // connection.onreconnecting(error => {
-    //   console.warn("SignalR reconnecting:", error);
-    //   setConnectionStatus("reconnecting");
-    //   setDisable(true);
-    //   setErrorMessage("Connection lost. Reconnecting...");
-    // });
-
-    // connection.onreconnected(connectionId => {
-    //   console.info("SignalR reconnected:", connectionId);
-    //   setDisable(false);
-    //   setConnectionStatus("connected");
-    //   setErrorMessage("");
-    // });
-
-    // connection.onclose(error => {
-    //   console.error("SignalR connection closed:", error);
-    //   setConnectionStatus("disconnected");
-    //   setErrorMessage(
-    //     "The whiteboard server connection was lost. Please refresh the page to try again."
-    //   );
-    // });
-
     setConnection(connection);
   }, []);
 
@@ -140,16 +98,8 @@ function App() {
     }
 
   useEffect(() => {
-    // // Notify when a new user has joined
-    // connection?.on("RecieveNotification", (message, whiteboard) => {
-    //   console.log(message);
-    //   setMessageList(prev => prev.concat(message));
-    //   setPostIts(whiteboard.postIts);
-    // });
-
-    // connection?.on("ReceiveMessage", (board => {
-    //   setPostIts(board.postIts);
-    // }));
+    // todo introduce reconnect stratergy if connection fails while running
+    // todo introduce onload stratergy to load board from server for any new clients 
 
     connection?.on("GetBoard", (board) => {
       setPostIts(board.postIts);
@@ -166,6 +116,7 @@ function App() {
 
     connection?.on("PostItConflict", (result) => {
       // todo handle conflict
+      // todo look at potentially introducing throttling to control mouse events
       console.log("conflict occoured!");
       console.log(result);
     });
@@ -211,6 +162,11 @@ function App() {
         console.log(newPosts);
         return newPosts;
       });
+    });
+
+    connection?.on("PostItDeleted", (id) => {
+      console.log("remote post deleted");
+      setPostIts(prevPostIts => prevPostIts.filter(item => item.id !== id));
     });
 
     startConnection();
@@ -302,6 +258,7 @@ function App() {
           y: mouse.y - item.y
         };
 
+        // todo rework this back in
         // make it so the current item being dragged always appears on top
         // const reorderedItems = [...postIts];
         // const [selectedItem] = reorderedItems.splice(i, 1);
@@ -354,7 +311,7 @@ function App() {
     if (!editingItemId) return;
 
     const index = postIts.findIndex(i => i.id === editingItemId);
-    const itemToDelete = {...postIts[index]};
+    const itemToDelete = {...postIts[index], version: postIts[index].version + 1};
     DeletePostItCommand(connection, itemToDelete);
     
     setPostIts(prevPostIts => prevPostIts.filter(item => item.id !== editingItemId));
@@ -461,13 +418,13 @@ function App() {
 
         <button type="button" className='rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700' onClick={() => GetBoardCommand(connection)}>Sync</button>
 
-        <div className='pt-4'>
+        {/* <div className='pt-4'>
           <p>Connection status: {connectionStatus}</p>
           <p className='pb-4'>{errorMessage}</p>
 
           <h3 className='pb-2 font-bold'>Messages:</h3>
           {messageList.map(message => <p className='text-sm text-slate-500'>{message}</p>)}
-        </div>
+        </div> */}
       </div>
     </div>
   );

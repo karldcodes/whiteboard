@@ -13,7 +13,8 @@ public sealed record AddPostIt(
         {
             return ApplyResult.Conflict(
                 currentVersion: null,
-                message: "Post-it with this ID already exists.");
+                message: "Post-it with this ID already exists.",
+                postIt: null);
         }
 
         NewPostIt.Version = 1;

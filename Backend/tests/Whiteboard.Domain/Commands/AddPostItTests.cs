@@ -13,15 +13,17 @@ public class AddPostItTests
         {
             Id = id
         });
-        var whiteBoard = new WhiteBoard(
-            PostIts: new List<PostIt>
+
+        var whiteBoard = new WhiteBoard
+        {
+            PostIts = new List<PostIt>
             {
                 new PostIt
                 {
                     Id = id
                 }
             }
-        );
+        };
 
 
         var result = addPostItCommand.Apply(whiteBoard);
@@ -38,15 +40,16 @@ public class AddPostItTests
         {
             Id = Guid.Empty
         });
-        var whiteBoard = new WhiteBoard(
-            PostIts: new List<PostIt>
+        var whiteBoard = new WhiteBoard
+        {
+            PostIts = new List<PostIt>
             {
                 new PostIt
                 {
                     Id = Guid.NewGuid()
                 }
             }
-        );
+        };
 
 
         var result = addPostItCommand.Apply(whiteBoard);

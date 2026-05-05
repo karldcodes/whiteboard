@@ -11,7 +11,7 @@ namespace Whiteboard.Domain.Store;
 public sealed class WhiteboardStore : IWhiteboardStore
 {
     private readonly object _lock = new();
-    private readonly WhiteBoard _items = new(PostIts: new List<PostIt>());
+    private readonly WhiteBoard _items = new();
     private readonly Channel<QueuedWhiteboardChange> _changes =
         Channel.CreateUnbounded<QueuedWhiteboardChange>();
 
@@ -25,9 +25,9 @@ public sealed class WhiteboardStore : IWhiteboardStore
     {
         lock (_lock)
         {
-            return new WhiteBoard(
-                PostIts: _items.PostIts.ToList()
-            );
+            return new WhiteBoard{
+                PostIts = _items.PostIts.ToList()
+            };
         }
     }
 

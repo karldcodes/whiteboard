@@ -1,3 +1,6 @@
 namespace Whiteboard.Domain.Models;
 
-public record WhiteBoard(List<PostIt> PostIts);
+public class WhiteBoard
+{
+    public List<PostIt> PostIts {get; set;} = new List<PostIt>();
+};

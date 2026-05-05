@@ -20,20 +20,19 @@ public sealed record MovePostIt(
 
         var current = board.PostIts[index];
 
-        if (current.Version != ExpectedPostItVersion)
+        if (current.Version + 1 == ExpectedPostItVersion)
         {
-            return ApplyResult.Conflict(
-                currentVersion: current.Version,
-                message: "This post-it has already changed.");
+            current.X = X;
+            current.Y = Y;
+            current.Version++;
+            board.PostIts[index] = current;
+            return ApplyResult.Succeeded(
+                newVersion: current.Version);
         }
-
-        current.X = X;
-        current.Y = Y;
-        current.Version++;
-
-        board.PostIts[index] = current;
-
-        return ApplyResult.Succeeded(
-            newVersion: current.Version);
+    
+        return ApplyResult.Conflict(
+            currentVersion: current.Version,
+            message: "This post-it has already changed.",
+            postIt: current);
     }
 }
