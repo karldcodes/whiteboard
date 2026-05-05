@@ -1,5 +1,9 @@
 namespace Whiteboard.Domain;
 
+/*
+* This result type lets the clients know if their changes were succesful 
+* or if there was any conflicts due to stale requests etc
+*/
 public sealed record ApplyResult(
     bool Success,
     long? CurrentVersion = null,

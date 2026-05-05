@@ -27,7 +27,7 @@ public sealed record UpdatePostItText(
         }
 
         current.Label = Text;
-        current.Version = current.Version + 1;
+        current.Version++;
 
         board.PostIts[index] = current;
 

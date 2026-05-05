@@ -4,7 +4,11 @@ using Whiteboard.Domain.Interfaces;
 
 namespace Whiteboard.Domain;
 
-public sealed class WhiteboardStore
+/* 
+* Currently the whiteboard is stored in memory but this could easily be switched out for anything else 
+* as we rely only on the interface implementation.
+*/
+public sealed class WhiteboardStore : IWhiteboardStore
 {
     private readonly object _lock = new();
     private readonly WhiteBoard _items = new(PostIts: new List<PostIt>());
@@ -27,6 +31,7 @@ public sealed class WhiteboardStore
         }
     }
 
+    // Queue change commands to the dashboard
     public async Task<ApplyResult> EnqueueChangeAsync(IWhiteboardChange change)
     {
         var completion = new TaskCompletionSource<ApplyResult>(
@@ -39,7 +44,7 @@ public sealed class WhiteboardStore
         return await completion.Task;
     }
 
-    public ApplyResult Apply(IWhiteboardChange change)
+    private ApplyResult Apply(IWhiteboardChange change)
     {
         lock (_lock)
         {
@@ -47,6 +52,7 @@ public sealed class WhiteboardStore
         }
     }
 
+    // Process loop that runs forever and applys the commands on the queue
     private async Task ProcessChangesAsync()
     {
         await foreach (var queued in _changes.Reader.ReadAllAsync())

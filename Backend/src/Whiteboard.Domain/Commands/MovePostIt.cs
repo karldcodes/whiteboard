@@ -29,7 +29,7 @@ public sealed record MovePostIt(
 
         current.X = X;
         current.Y = Y;
-        current.Version = current.Version + 1;
+        current.Version++;
 
         board.PostIts[index] = current;
 

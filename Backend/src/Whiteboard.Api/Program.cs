@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 // Add services
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<WhiteboardStore>();
+builder.Services.AddSingleton<IWhiteboardStore, WhiteboardStore>();
 
 var app = builder.Build();
 
@@ -51,9 +51,9 @@ app.Run();
 
 public class WhiteboardHub : Hub<IWhiteboardHub>
 {
-    private readonly WhiteboardStore _store;
+    private readonly IWhiteboardStore _store;
 
-    public WhiteboardHub(WhiteboardStore store)
+    public WhiteboardHub(IWhiteboardStore store)
     {
         _store = store;
     }

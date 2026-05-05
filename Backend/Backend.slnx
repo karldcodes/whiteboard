@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Whiteboard.Api/Whiteboard.Api.csproj" />
+    <Project Path="src/Whiteboard.Domain/Whiteboard.Domain.csproj" />
+  </Folder>
+  <Project Path="tests/tests.csproj" />
+</Solution>

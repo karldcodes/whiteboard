@@ -1,4 +1,4 @@
-namespace Whiteboard.Tests;
+namespace tests;
 
 public class UnitTest1
 {
