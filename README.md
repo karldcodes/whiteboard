@@ -12,13 +12,11 @@ Whenever a new client connects to the board, they are given a connection id and 
 * Edit the label
 * Delete a postit
 * Organise postit's by clicking and dragging
-* View who has left and joined the board
 
 ### Error handling
 
-* Handles situations where discounts with the server may occur
-* On connection fail it will attempt to reconnect and disables editing while doing so
 * Uses exponential backoff when attempting to reconnect
+* Manual sync button if things appear off (automatic refresh in future)
 
 ## Prerequisites 
 
@@ -28,7 +26,7 @@ Whenever a new client connects to the board, they are given a connection id and 
 ## Running the project
 
 1. download repo
-2. create a terminal in backend project and type `dotnet run`
+2. create a terminal in backend project and type `dotnet run --project src/Whiteboard.Api`
 3. create a terminal in frontend project and type `npm run dev`
 4. load url provided by terminal in frontend project
 
@@ -47,14 +45,15 @@ Whenever a new client connects to the board, they are given a connection id and 
 
 # Todo
 
-* Improve the UI when connection has failed and editing is disabled
 * Investigate ways to restore or merge local state with server state so users can work offline
 * Implement central logger with tracing
 * Investigate signalr backplane for scaling in microservices
-* Add unit tests
+* Add unit tests to frontend
 * Change the backend code to save the board state in a database instead of in memory
 * Updated frontend so you can write large amounts of text
 * Add user management and permissions
 * Add board management UI screens
 * Remove references to hardcoded urls
 * Organise backend project into correct folders for interfaces, services etc
+* Finish off conflicts in FE for syncing stale state
+* Add back in automatic reconnecting and state refresh after branch merge
