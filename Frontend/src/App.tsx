@@ -99,7 +99,6 @@ function App() {
 
   useEffect(() => {
     // todo introduce reconnect stratergy if connection fails while running
-    // todo introduce onload stratergy to load board from server for any new clients 
 
     connection?.on("GetBoard", (board) => {
       setPostIts(board.postIts);
