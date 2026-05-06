@@ -179,7 +179,6 @@ function App() {
     });
 
     connection?.on("Disconnected", (connectionId) => {
-      //setPostIts(board.postIts);
       setMessageList(prevmessages => [...prevmessages, {
         id: crypto.randomUUID(),
         text: `${connectionId} left the board` 
