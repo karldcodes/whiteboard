@@ -20,6 +20,12 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
         await Clients.All.GetBoard(result);
     }
 
+    public override async Task OnConnectedAsync()
+    {
+        await Clients.Caller.Connected(_store.Get(), Context.ConnectionId);
+        await base.OnConnectedAsync();
+    }
+
     public async Task AddPostIt(PostIt postIt)
     {
         var result = await _store.EnqueueChangeAsync(new AddPostIt(postIt));

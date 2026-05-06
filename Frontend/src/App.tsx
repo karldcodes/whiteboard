@@ -169,6 +169,12 @@ function App() {
       setPostIts(prevPostIts => prevPostIts.filter(item => item.id !== id));
     });
 
+    connection?.on("Connected", (board, connectionId) => {
+      setConnectionStatus("connected");
+      setPostIts(board.postIts);
+      setMessageList(prevmessages => [...prevmessages, connectionId]);
+    });
+
     startConnection();
 
     return () => {
@@ -418,13 +424,13 @@ function App() {
 
         <button type="button" className='mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700' onClick={() => GetBoardCommand(connection)}>Sync</button>
 
-        {/* <div className='pt-4'>
+        <div className='pt-4'>
           <p>Connection status: {connectionStatus}</p>
           <p className='pb-4'>{errorMessage}</p>
 
           <h3 className='pb-2 font-bold'>Messages:</h3>
           {messageList.map(message => <p className='text-sm text-slate-500'>{message}</p>)}
-        </div> */}
+        </div> 
       </div>
     </div>
   );

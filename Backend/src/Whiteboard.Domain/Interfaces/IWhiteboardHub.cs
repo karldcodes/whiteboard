@@ -9,4 +9,5 @@ public interface IWhiteboardHub
     Task PostItTextUpdated(Guid postItId, string text, long? version);
     Task PostItConflict(ApplyResult result);
     Task GetBoard(WhiteBoard whiteBoard);
+    Task Connected(WhiteBoard whiteboard, string connectionId);
 }
