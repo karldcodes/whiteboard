@@ -54,7 +54,7 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [connection, setConnection] = useState<signalR.HubConnection>();
-  const [messageList, setMessageList] = useState<Array<string>>([]);
+  const [messageList, setMessageList] = useState<Array<any>>([]);
   const [postIts, setPostIts] = useState<Array<PostIt>>([]);
   const [draggedItemId, setDraggedItemId] = useState<string>("");
   const [editingItemId, setEditingItemId] = useState<string>("");
@@ -172,7 +172,18 @@ function App() {
     connection?.on("Connected", (board, connectionId) => {
       setConnectionStatus("connected");
       setPostIts(board.postIts);
-      setMessageList(prevmessages => [...prevmessages, connectionId]);
+      setMessageList(prevmessages => [...prevmessages, {
+        id: crypto.randomUUID(),
+        text: `${connectionId} joined the board` 
+      }]);
+    });
+
+    connection?.on("Disconnected", (connectionId) => {
+      //setPostIts(board.postIts);
+      setMessageList(prevmessages => [...prevmessages, {
+        id: crypto.randomUUID(),
+        text: `${connectionId} left the board` 
+      }]);
     });
 
     startConnection();
@@ -429,7 +440,9 @@ function App() {
           <p className='pb-4'>{errorMessage}</p>
 
           <h3 className='pb-2 font-bold'>Messages:</h3>
-          {messageList.map(message => <p className='text-sm text-slate-500'>{message}</p>)}
+          <div className='overflow-y-auto max-h-40'>
+            {messageList.map(message => <p key={message.id} className='text-sm text-slate-500'>{message.text}</p>)}
+          </div>
         </div> 
       </div>
     </div>

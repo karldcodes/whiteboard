@@ -10,4 +10,5 @@ public interface IWhiteboardHub
     Task PostItConflict(ApplyResult result);
     Task GetBoard(WhiteBoard whiteBoard);
     Task Connected(WhiteBoard whiteboard, string connectionId);
+    Task Disconnected(string connectionId);
 }

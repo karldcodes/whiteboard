@@ -22,8 +22,14 @@ public class WhiteboardHub : Hub<IWhiteboardHub>
 
     public override async Task OnConnectedAsync()
     {
-        await Clients.Caller.Connected(_store.Get(), Context.ConnectionId);
+        await Clients.All.Connected(_store.Get(), Context.ConnectionId);
         await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        await Clients.All.Disconnected(Context.ConnectionId);
+        await base.OnDisconnectedAsync(exception);
     }
 
     public async Task AddPostIt(PostIt postIt)
